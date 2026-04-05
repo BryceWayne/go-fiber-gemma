@@ -10,6 +10,9 @@ import (
 	"github.com/BryceWayne/go-fiber-gemma/internal/models"
 )
 
+// OllamaEndpoint allows unit tests to override the target URL
+var OllamaEndpoint = "http://localhost:11434/api/chat"
+
 // AskOllama sends the given full prompt to the local Ollama instance (gemma4:e2b)
 func AskOllama(fullPrompt string) (string, error) {
 	chatPayload := models.OllamaChatRequest{
@@ -33,7 +36,7 @@ func AskOllama(fullPrompt string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", "http://localhost:11434/api/chat", bytes.NewBuffer(jsonData))
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", OllamaEndpoint, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", err
 	}
