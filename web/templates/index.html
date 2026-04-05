@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="top-nav">
+            <div class="logo">
+                <span class="logo-icon"></span>
+                <h1>GEMMA <span class="highlight">CORE</span></h1>
+            </div>
+            <div class="status-indicator">
+                <div class="pulse"></div>
+                <span>SYS.ONLINE</span>
+            </div>
+        </header>
+
+        <main class="chat-container">
+            <div id="chat-history" class="chat-history">
+                <!-- Initial greeting -->
+                <div class="message ai">
+                    <div class="message-content">
+                        Gemma sequence initiated. Provide input via terminal below.
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="input-area">
+            <!-- HTMX Form -->
+            <form id="chat-form"
+                  hx-post="/chat" 
+                  hx-target="#thinking-indicator" 
+                  hx-swap="outerHTML"
+                  hx-on::after-request="this.reset()">
+                <div class="input-wrapper">
+                    <span class="prompt-symbol">></span>
+                    <input type="text" name="prompt" id="prompt-input" autocomplete="off" placeholder="Enter query..." required autofocus>
+                </div>
+                <button type="submit" class="submit-btn" id="submit-btn">EXECUTE</button>
+            </form>
+        </footer>
+    </div>
+    <script>
+        document.getElementById('chat-form').addEventListener('submit', function(e) {
+            const prompt = document.getElementById('prompt-input').value;
+            if (!prompt) return;
+            const history = document.getElementById('chat-history');
+            
+            // Immediately append user message
+            history.insertAdjacentHTML('beforeend', `
+                <div class="message user">
+                    <div class="message-content">
+                        <span class="role-label">USER_REQ //</span> ${prompt.replace(/</g, "&lt;")}
+                    </div>
+                </div>
+            `);
+
+            // Immediately append thinking indicator
+            history.insertAdjacentHTML('beforeend', `
+                <div class="message ai" id="thinking-indicator">
+                    <div class="message-content">
+                        <span class="role-label">SYS_RES //</span>
+                        <div class="typing-dots">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            // Auto-scroll
+            const chatContainer = document.querySelector('.chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Clear input immediately after HTMX serializes it
+            setTimeout(() => { document.getElementById('prompt-input').value = ''; }, 10);
+        });
+
+        // Auto-scroll when HTMX completes
+        document.body.addEventListener('htmx:afterSwap', function() {
+            const chatContainer = document.querySelector('.chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            document.getElementById('prompt-input').focus();
+        });
+    </script>
+</body>
+</html>
